@@ -5,7 +5,8 @@ import json
 import time
 import sys
 
-if __name__ == "__main__":
+
+def main():
     start_time = time.time()
 
     project_root = subprocess.check_output(
@@ -67,3 +68,7 @@ if __name__ == "__main__":
         f"Wrote {len(compile_commands)} compile commands to {project_root}/compile_commands.json after {end_time - start_time:.2f} seconds",
         file=sys.stderr,
     )
+
+
+if __name__ == "__main__":
+    main()
