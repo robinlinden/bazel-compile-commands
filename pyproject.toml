@@ -1,0 +1,11 @@
+[project]
+name = "bazel_compile_commands"
+description = "A tool for generating compile_commands.json files for Bazel projects."
+version = "0.1.0"
+license = "BSD-2-Clause"
+authors = [
+    { name = "Robin Lindén", email = "dev@robinlinden.eu" }
+]
+
+[project.scripts]
+bccommand = "bccommand:main"
