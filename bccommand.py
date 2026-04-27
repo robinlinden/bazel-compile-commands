@@ -31,7 +31,7 @@ def main():
         # Allow the user to pass additional arguments, e.g. if they want a
         # --config or whatever.
         *sys.argv[1:],
-        'mnemonic("CppCompile", ...)',
+        'mnemonic("CppCompile", deps(...))',
     ]
 
     print(f"Running '{' '.join(command)}'", file=sys.stderr)
