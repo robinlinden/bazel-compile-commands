@@ -24,6 +24,9 @@ def main():
         # layering_check adds a lot of '-fmodule-map-file'-arguments that aren't
         # useful for compile_commands.json.
         "--features=-layering_check",
+        # In my projects, tooling is included in the target configuration as
+        # well, and including the same file twice doesn't make much sense.
+        "--notool_deps",
         "--output=jsonproto",
         # Allow the user to pass additional arguments, e.g. if they want a
         # --config or whatever.
