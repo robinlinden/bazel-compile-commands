@@ -4,6 +4,8 @@ import subprocess
 import json
 import time
 import sys
+import pathlib
+import os
 
 
 def main():
@@ -12,6 +14,40 @@ def main():
     project_root = subprocess.check_output(
         ["bazel", "info", "workspace"], text=True
     ).strip()
+
+    project_name = project_root.rsplit("/")[-1]
+
+    # Bazel's compile commands are based from bazel-<project_name>, and that's a
+    # mirror of the workspace root, except it also has all external dependencies
+    # in an external/ subdirectory. To make the compile commands work without
+    # modification, we need to create a symlink from external/ to
+    # bazel-<project_name>/external.
+    # TODO(robinlinden): Patch the paths in the compile commands instead.
+    is_windows = os.name == "nt"
+    src = pathlib.Path("external")
+    dst = pathlib.Path(project_root) / f"bazel-{project_name}" / "external"
+    if not pathlib.Path("external").exists():
+        if is_windows:
+            subprocess.run(f'mklink /J "{src}" "{dst}"', check=True, shell=True)
+        else:
+            src.symlink_to(dst)
+        print(f"Created symlink from '{src}' to '{dst}'", file=sys.stderr)
+    else:
+        # Check if the symlink points to the correct location, and warn if it doesn't.
+        symlink_ok = False
+        if is_windows:
+            # Check that src/ and dst/ contain the same folders. Windows doesn't like symlinks. :(
+            src_folders = set(p.name for p in src.iterdir())
+            dst_folders = set(p.name for p in dst.iterdir())
+            symlink_ok = src_folders == dst_folders
+        else:
+            symlink_ok = src.is_symlink() and src.resolve() == dst.resolve()
+
+        if not symlink_ok:
+            print(
+                f"Warning: 'external' already exists, but does not point to '{dst}'. You'll probably have issues w/ external dependencies.",
+                file=sys.stderr,
+            )
 
     command = [
         "bazel",
