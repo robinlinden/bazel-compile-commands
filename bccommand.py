@@ -5,7 +5,6 @@ import json
 import time
 import sys
 import pathlib
-import os
 
 
 # Rewrites include paths in MSVC compile commands to be valid in the workspace
@@ -27,6 +26,12 @@ def _patch_msvc_include_path(workspace_name, argument):
     return argument
 
 
+def _patch_linux_include_path(workspace_name, argument):
+    if argument.startswith("external/"):
+        argument = argument.replace("external/", f"bazel-{workspace_name}/external/", 1)
+    return argument
+
+
 def main():
     start_time = time.time()
 
@@ -35,28 +40,6 @@ def main():
     ).strip()
 
     project_name = project_root.rsplit("/")[-1]
-
-    # Bazel's compile commands are based from bazel-<project_name>, and that's a
-    # mirror of the workspace root, except it also has all external dependencies
-    # in an external/ subdirectory. To make the compile commands work without
-    # modification, we need to create a symlink from external/ to
-    # bazel-<project_name>/external.
-    # TODO(robinlinden): Patch the paths in the Linux compile commands as well.
-    is_windows = os.name == "nt"
-    if not is_windows:
-        src = pathlib.Path("external")
-        dst = pathlib.Path(project_root) / f"bazel-{project_name}" / "external"
-        if not pathlib.Path("external").exists():
-            src.symlink_to(dst)
-            print(f"Created symlink from '{src}' to '{dst}'", file=sys.stderr)
-        else:
-            # Check if the symlink points to the correct location, and warn if it doesn't.
-            symlink_ok = src.is_symlink() and src.resolve() == dst.resolve()
-            if not symlink_ok:
-                print(
-                    f"Warning: 'external' already exists, but does not point to '{dst}'. You'll probably have issues w/ external dependencies.",
-                    file=sys.stderr,
-                )
 
     command = [
         "bazel",
@@ -100,6 +83,11 @@ def main():
         for i, arg in enumerate(arguments):
             if is_msvc:
                 arguments[i] = _patch_msvc_include_path(project_name, arg)
+            elif arg in ("-iquote", "-isystem") and i + 1 < len(arguments):
+                arguments[i + 1] = _patch_linux_include_path(
+                    project_name, arguments[i + 1]
+                )
+
             if arg in ("-c", "/c") and i + 1 < len(arguments):
                 source_file = arguments[i + 1]
                 compile_commands.append(
