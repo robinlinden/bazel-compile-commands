@@ -67,7 +67,9 @@ def main():
 
     print(f"Running '{' '.join(command)}'", file=sys.stderr)
 
-    result = subprocess.run(command, capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        command, stderr=None, stdout=subprocess.PIPE, text=True, check=True
+    )
 
     aquery_output = json.loads(result.stdout)
     actions = aquery_output.get("actions", [])
