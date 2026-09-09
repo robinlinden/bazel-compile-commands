@@ -12,6 +12,6 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v6
-      - run: pipx install ruff==0.15.12
+      - run: pipx install ruff==0.16.6
       - run: ruff format --diff
       - run: ruff check

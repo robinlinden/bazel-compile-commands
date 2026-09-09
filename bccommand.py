@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import subprocess
 import json
-import time
-import sys
 import pathlib
+import subprocess
+import sys
+import time
 
 
 # Rewrites include paths in MSVC compile commands to be valid in the workspace
