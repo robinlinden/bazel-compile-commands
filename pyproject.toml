@@ -8,4 +8,4 @@ authors = [
 ]
 
 [project.scripts]
-bccommand = "bccommand:main"
+bccommand = "bazel_compile_commands.cli:main"
