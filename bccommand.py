@@ -33,7 +33,7 @@ def _patch_linux_include_path(workspace_name, argument):
 
 
 def main():
-    start_time = time.time()
+    start_time = time.monotonic()
 
     project_root = subprocess.check_output(
         ["bazel", "info", "workspace"], text=True
@@ -112,7 +112,7 @@ def main():
     with open(f"{project_root}/compile_commands.json", "w") as f:
         json.dump(compile_commands, f, indent=2)
 
-    end_time = time.time()
+    end_time = time.monotonic()
     print(
         f"Wrote {len(compile_commands)} compile commands to {project_root}/compile_commands.json after {end_time - start_time:.2f} seconds",
         file=sys.stderr,
