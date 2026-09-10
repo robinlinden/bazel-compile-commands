@@ -32,6 +32,42 @@ def _patch_linux_include_path(workspace_name, argument):
     return argument
 
 
+def _action_to_compile_command(project_root, workspace_name, action):
+    arguments = action.get("arguments", [])
+    if not arguments:
+        print(f"No arguments found for action: {action}", file=sys.stderr)
+        return None
+
+    is_msvc = pathlib.Path(arguments[0]).name == "cl.exe"
+
+    source_file = None
+
+    for i, arg in enumerate(arguments):
+        if is_msvc:
+            arguments[i] = _patch_msvc_include_path(workspace_name, arg)
+        elif arg in ("-iquote", "-isystem") and i + 1 < len(arguments):
+            arguments[i + 1] = _patch_linux_include_path(
+                workspace_name, arguments[i + 1]
+            )
+
+        if arg in ("-c", "/c") and i + 1 < len(arguments):
+            source_file = arguments[i + 1]
+            break
+
+    if source_file is None:
+        print(
+            f"No source file found for action with arguments: {arguments}",
+            file=sys.stderr,
+        )
+        return None
+
+    return {
+        "directory": project_root,
+        "arguments": arguments,
+        "file": source_file,
+    }
+
+
 def main():
     start_time = time.monotonic()
 
@@ -39,7 +75,7 @@ def main():
         ["bazel", "info", "workspace"], text=True
     ).strip()
 
-    project_name = project_root.rsplit("/")[-1]
+    workspace_name = project_root.rsplit("/")[-1]
 
     command = [
         "bazel",
@@ -78,36 +114,12 @@ def main():
 
     print(f"Found {len(actions)} actions in aquery output", file=sys.stderr)
     for action in actions:
-        arguments = action.get("arguments", [])
-        if not arguments:
-            print(f"No arguments found for action: {action}", file=sys.stderr)
-            continue
+        compile_command = _action_to_compile_command(
+            project_root, workspace_name, action
+        )
 
-        is_msvc = pathlib.Path(arguments[0]).name == "cl.exe"
-
-        for i, arg in enumerate(arguments):
-            if is_msvc:
-                arguments[i] = _patch_msvc_include_path(project_name, arg)
-            elif arg in ("-iquote", "-isystem") and i + 1 < len(arguments):
-                arguments[i + 1] = _patch_linux_include_path(
-                    project_name, arguments[i + 1]
-                )
-
-            if arg in ("-c", "/c") and i + 1 < len(arguments):
-                source_file = arguments[i + 1]
-                compile_commands.append(
-                    {
-                        "directory": project_root,
-                        "arguments": arguments,
-                        "file": source_file,
-                    }
-                )
-                break
-        else:
-            print(
-                f"No source file found for action with arguments: {arguments}",
-                file=sys.stderr,
-            )
+        if compile_command is not None:
+            compile_commands.append(compile_command)
 
     with open(f"{project_root}/compile_commands.json", mode="w", encoding="utf-8") as f:
         json.dump(compile_commands, f, indent=2)
