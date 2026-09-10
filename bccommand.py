@@ -109,7 +109,7 @@ def main():
                 file=sys.stderr,
             )
 
-    with open(f"{project_root}/compile_commands.json", "w") as f:
+    with open(f"{project_root}/compile_commands.json", mode="w", encoding="utf-8") as f:
         json.dump(compile_commands, f, indent=2)
 
     end_time = time.monotonic()
