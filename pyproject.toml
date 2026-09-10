@@ -9,3 +9,8 @@ authors = [
 
 [project.scripts]
 bccommand = "bazel_compile_commands.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
