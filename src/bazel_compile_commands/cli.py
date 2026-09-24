@@ -32,10 +32,19 @@ def _patch_linux_include_path(workspace_name, argument):
     return argument
 
 
+def _is_header_processing_action(arguments):
+    return "-xc++-header" in arguments
+
+
 def _action_to_compile_command(project_root, workspace_name, action):
     arguments = action.get("arguments", [])
     if not arguments:
         print(f"No arguments found for action: {action}", file=sys.stderr)
+        return None
+
+    # We currently can't find the relevant source_file for header-parsing
+    # actions, so let's leave them out for now.
+    if _is_header_processing_action(arguments):
         return None
 
     is_msvc = pathlib.Path(arguments[0]).name == "cl.exe"
@@ -88,9 +97,6 @@ def main():
         # layering_check adds a lot of '-fmodule-map-file'-arguments that aren't
         # useful for compile_commands.json.
         "--features=-layering_check",
-        # We currently can't find the relevant source_file for header-parsing
-        # actions, so let's leave them out for now.
-        "--features=-parse_headers",
         # In my projects, tooling is included in the target configuration as
         # well, and including the same file twice doesn't make much sense.
         "--notool_deps",
