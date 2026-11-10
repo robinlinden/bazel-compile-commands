@@ -57,6 +57,37 @@ from bazel_compile_commands.cli import _action_to_compile_command
                 "file": "bazel-project/external/foo/src.cc",
             },
         ),
+        (
+            # compiler in external/, --sysroot, and -B.
+            {
+                "arguments": [
+                    "external/some/compiler",
+                    "--sysroot=external/sysroot",
+                    "-Bexternal/toolchain",
+                    "--sysroot",
+                    "external/split-sysroot",
+                    "-B",
+                    "external/split-toolchain",
+                    "-c",
+                    "src/foo.cc",
+                ]
+            },
+            {
+                "directory": "/good/project",
+                "arguments": [
+                    "bazel-project/external/some/compiler",
+                    "--sysroot=bazel-project/external/sysroot",
+                    "-Bbazel-project/external/toolchain",
+                    "--sysroot",
+                    "bazel-project/external/split-sysroot",
+                    "-B",
+                    "bazel-project/external/split-toolchain",
+                    "-c",
+                    "src/foo.cc",
+                ],
+                "file": "src/foo.cc",
+            },
+        ),
         # Windows/MSVC
         (
             {

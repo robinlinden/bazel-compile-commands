@@ -32,6 +32,14 @@ def _patch_linux_arguments(workspace_name, arguments):
             arguments[i] = arg.replace(
                 "external/", f"bazel-{workspace_name}/external/", 1
             )
+        elif arg.startswith("--sysroot=external/"):
+            arguments[i] = arg.replace(
+                "--sysroot=external/", f"--sysroot=bazel-{workspace_name}/external/", 1
+            )
+        elif arg.startswith("-Bexternal/"):
+            arguments[i] = arg.replace(
+                "-Bexternal/", f"-Bbazel-{workspace_name}/external/", 1
+            )
 
 
 def _is_header_processing_action(arguments):
