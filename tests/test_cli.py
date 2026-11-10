@@ -34,6 +34,29 @@ from bazel_compile_commands.cli import _action_to_compile_command
                 "file": "src/foo.cc",
             },
         ),
+        (
+            # -c src.cc before arguments that should be patched.
+            {
+                "arguments": [
+                    "clang++",
+                    "-c",
+                    "src/foo.cc",
+                    "-isystem",
+                    "external/bar",
+                ]
+            },
+            {
+                "directory": "/good/project",
+                "arguments": [
+                    "clang++",
+                    "-c",
+                    "src/foo.cc",
+                    "-isystem",
+                    "bazel-project/external/bar",
+                ],
+                "file": "src/foo.cc",
+            },
+        ),
         # Windows/MSVC
         (
             {
