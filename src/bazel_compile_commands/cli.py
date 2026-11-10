@@ -26,17 +26,11 @@ def _patch_msvc_arguments(workspace_name, arguments):
             )
 
 
-def _patch_linux_include_path(workspace_name, argument):
-    if argument.startswith("external/"):
-        argument = argument.replace("external/", f"bazel-{workspace_name}/external/", 1)
-    return argument
-
-
 def _patch_linux_arguments(workspace_name, arguments):
     for i, arg in enumerate(arguments):
-        if arg in ("-iquote", "-isystem") and i + 1 < len(arguments):
-            arguments[i + 1] = _patch_linux_include_path(
-                workspace_name, arguments[i + 1]
+        if arg.startswith("external/"):
+            arguments[i] = arg.replace(
+                "external/", f"bazel-{workspace_name}/external/", 1
             )
 
 

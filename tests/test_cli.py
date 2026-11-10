@@ -40,7 +40,7 @@ from bazel_compile_commands.cli import _action_to_compile_command
                 "arguments": [
                     "clang++",
                     "-c",
-                    "src/foo.cc",
+                    "external/foo/src.cc",
                     "-isystem",
                     "external/bar",
                 ]
@@ -50,11 +50,11 @@ from bazel_compile_commands.cli import _action_to_compile_command
                 "arguments": [
                     "clang++",
                     "-c",
-                    "src/foo.cc",
+                    "bazel-project/external/foo/src.cc",
                     "-isystem",
                     "bazel-project/external/bar",
                 ],
-                "file": "src/foo.cc",
+                "file": "bazel-project/external/foo/src.cc",
             },
         ),
         # Windows/MSVC
