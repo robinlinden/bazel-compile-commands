@@ -122,6 +122,63 @@ def test_action_to_compile_command(action, expected):
     assert result == expected
 
 
+def test_action_to_compile_command_excludes_matching_argument():
+    action = {
+        "arguments": [
+            "clang++",
+            "-fsyntax-only",
+            "-c",
+            "src/foo.cc",
+        ]
+    }
+
+    result = _action_to_compile_command(
+        "/good/project",
+        "project",
+        action,
+        ["-fsyntax-only"],
+    )
+
+    assert result is None
+
+
+def test_action_to_compile_command_keeps_nonmatching_argument():
+    action = {
+        "arguments": [
+            "clang++",
+            "-Wall",
+            "-c",
+            "src/foo.cc",
+        ]
+    }
+
+    result = _action_to_compile_command(
+        "/good/project",
+        "project",
+        action,
+        ["-fsyntax-only"],
+    )
+
+    assert result == {
+        "directory": "/good/project",
+        "arguments": ["clang++", "-Wall", "-c", "src/foo.cc"],
+        "file": "src/foo.cc",
+    }
+
+
+def test_parse_args_accepts_repeated_exclude_arguments():
+    args = _parse_args(
+        [
+            "--exclude-if-has-argument=-fsyntax-only",
+            "--exclude-if-has-argument=-Werror",
+            "--",
+            "--config=myconfig",
+        ]
+    )
+    assert args.exclude_if_has_argument == ["-fsyntax-only", "-Werror"]
+    assert args.aquery_args == ["--config=myconfig"]
+
+
 def test_parse_args_accepts_aquery_args_after_separator():
     args = _parse_args(["--", "--config=myconfig", "//foo"])
     assert args.aquery_args == ["--config=myconfig", "//foo"]
@@ -135,5 +192,12 @@ def test_parse_args_allows_no_aquery_args():
 def test_parse_args_requires_separator_for_aquery_args():
     with pytest.raises(SystemExit) as exc_info:
         _parse_args(["//foo"])
+
+    assert exc_info.value.code == 2
+
+
+def test_parse_args_rejects_separator_after_aquery_args():
+    with pytest.raises(SystemExit) as exc_info:
+        _parse_args(["asdf", "--"])
 
     assert exc_info.value.code == 2
