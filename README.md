@@ -31,3 +31,13 @@ You can pass additional arguments to `bazel aquery` after `--`:
 ```bash
 bccommand -- --config=myconfig
 ```
+
+### Excluding Compile Commands
+
+Use `--exclude-if-has-argument` to omit compile commands containing a specific
+compiler argument. The option can be repeated:
+
+```bash
+bccommand --exclude-if-has-argument=-fsyntax-only \
+  --exclude-if-has-argument=-Werror
+```

@@ -47,10 +47,15 @@ def _is_header_processing_action(arguments):
     return "-xc++-header" in arguments
 
 
-def _action_to_compile_command(project_root, workspace_name, action):
+def _action_to_compile_command(
+    project_root, workspace_name, action, exclude_if_has_arguments=()
+):
     arguments = action.get("arguments", [])
     if not arguments:
         print(f"No arguments found for action: {action}", file=sys.stderr)
+        return None
+
+    if any(argument in arguments for argument in exclude_if_has_arguments):
         return None
 
     # We currently can't find the relevant source_file for header-parsing
@@ -89,7 +94,17 @@ def _action_to_compile_command(project_root, workspace_name, action):
 def _parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Generate compile_commands.json from a Bazel workspace.",
-        usage="%(prog)s [-h] [-- [aquery_args...]]",
+        usage=(
+            "%(prog)s [-h] [--exclude-if-has-argument ARGUMENT]... "
+            "[-- [aquery_args...]]"
+        ),
+    )
+    parser.add_argument(
+        "--exclude-if-has-argument",
+        action="append",
+        default=[],
+        metavar="ARGUMENT",
+        help="exclude compile commands containing this argument (can be repeated)",
     )
     parser.add_argument(
         "aquery_args",
@@ -99,7 +114,7 @@ def _parse_args(argv):
 
     args = parser.parse_args(argv)
 
-    if args.aquery_args and argv[0] != "--":
+    if args.aquery_args and args.aquery_args[0] != "--":
         parser.error("aquery arguments must be preceded by '--'")
 
     if args.aquery_args and args.aquery_args[0] == "--":
@@ -156,7 +171,10 @@ def main():
     print(f"Found {len(actions)} actions in aquery output", file=sys.stderr)
     for action in actions:
         compile_command = _action_to_compile_command(
-            project_root, workspace_name, action
+            project_root,
+            workspace_name,
+            action,
+            args.exclude_if_has_argument,
         )
 
         if compile_command is not None:
