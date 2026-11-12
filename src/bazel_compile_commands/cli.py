@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import pathlib
 import subprocess
@@ -85,7 +86,30 @@ def _action_to_compile_command(project_root, workspace_name, action):
     }
 
 
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description="Generate compile_commands.json from a Bazel workspace.",
+        usage="%(prog)s [-h] [-- [aquery_args...]]",
+    )
+    parser.add_argument(
+        "aquery_args",
+        nargs=argparse.REMAINDER,
+        help="arguments passed to bazel aquery",
+    )
+
+    args = parser.parse_args(argv)
+
+    if args.aquery_args and argv[0] != "--":
+        parser.error("aquery arguments must be preceded by '--'")
+
+    if args.aquery_args and args.aquery_args[0] == "--":
+        args.aquery_args = args.aquery_args[1:]
+
+    return args
+
+
 def main():
+    args = _parse_args(sys.argv[1:])
     start_time = time.monotonic()
 
     project_root = subprocess.check_output(
@@ -114,7 +138,7 @@ def main():
         "--output=jsonproto",
         # Allow the user to pass additional arguments, e.g. if they want a
         # --config or whatever.
-        *sys.argv[1:],
+        *args.aquery_args,
         'mnemonic("CppCompile", deps(...))',
     ]
 

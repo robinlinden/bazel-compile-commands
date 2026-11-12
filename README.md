@@ -26,9 +26,8 @@ The script will:
 
 ### Custom Arguments
 
-You can pass additional arguments to `bazel aquery`, such as configuration
-options:
+You can pass additional arguments to `bazel aquery` after `--`:
 
 ```bash
-bccommand --config=myconfig
+bccommand -- --config=myconfig
 ```

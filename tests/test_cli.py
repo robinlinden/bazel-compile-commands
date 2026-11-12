@@ -1,6 +1,6 @@
 import pytest
 
-from bazel_compile_commands.cli import _action_to_compile_command
+from bazel_compile_commands.cli import _action_to_compile_command, _parse_args
 
 
 # Parametrized test for action to compile command for both Linux and MSVC:
@@ -120,3 +120,20 @@ def test_action_to_compile_command(action, expected):
         action,
     )
     assert result == expected
+
+
+def test_parse_args_accepts_aquery_args_after_separator():
+    args = _parse_args(["--", "--config=myconfig", "//foo"])
+    assert args.aquery_args == ["--config=myconfig", "//foo"]
+
+
+def test_parse_args_allows_no_aquery_args():
+    args = _parse_args([])
+    assert args.aquery_args == []
+
+
+def test_parse_args_requires_separator_for_aquery_args():
+    with pytest.raises(SystemExit) as exc_info:
+        _parse_args(["//foo"])
+
+    assert exc_info.value.code == 2
